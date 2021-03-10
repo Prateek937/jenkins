@@ -1,7 +1,7 @@
 <pre>
 <?php
 
-print "hello"
+print "Second time Hello!"
 
 ?>
 </pre>
