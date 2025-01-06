@@ -10,7 +10,7 @@ pipeline {
                 script {
                     sh '''
                     # Initialize Terraform
-                    cd cluster
+                    cd ekscluster
                     terraform init
 
                     # Apply Terraform configuration
