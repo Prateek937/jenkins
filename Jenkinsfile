@@ -1,9 +1,18 @@
 pipeline {
     agent any
     stages {
-        stage('Run Echo Command') {
+        stage('Provision EKS Cluster') {
             steps {
-                sh 'terraform version'
+                script {
+                    sh '''
+                    # Initialize Terraform
+                    cd cluster
+                    terraform init
+
+                    # Apply Terraform configuration
+                    terraform apply -auto-approve
+                    '''
+                }
             }
         }
     }
