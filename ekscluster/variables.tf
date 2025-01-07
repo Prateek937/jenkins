@@ -8,3 +8,17 @@ variable "subnet_ids" {
 variable "vpc_id" {
   default = "vpc-0b448e60"
 }
+
+variable "security_group_ids" {
+  default = ["sg-1e994361"]
+}
+
+variable "node_groups" {
+  default = {
+    node1 : {
+      desired_size = 1
+      max_size     = 2
+      min_size     = 1
+    }
+  }
+}
