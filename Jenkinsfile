@@ -29,7 +29,7 @@ pipeline {
                     sh '''
                     # Update kubeconfig to access EKS cluster
                     aws eks update-kubeconfig --region ${AWS_REGION} --name ${CLUSTER_NAME} --kubeconfig $KUBECONFIG
-                    echo ${env.WORKSPACE}
+                    echo $KUBECONFIG
                     kubectl get pods --kubeconfig $KUBECONFIG
                     '''
                 }
