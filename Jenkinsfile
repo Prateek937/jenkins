@@ -37,5 +37,3 @@ pipeline {
         }
     }
 }
-aws eks update-kubeconfig --region $AWS_REGION --name $CLUSTER_NAME --kubeconfig $KUBECONFIG
-                    
