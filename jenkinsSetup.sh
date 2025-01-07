@@ -14,12 +14,17 @@ echo '-----------------------------install kubectl------------------------------
 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 kubectl version --client
+
+echo '-----------------------------install aws cli------------------------------------------------'
+# install aws cli
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
 echo '-----------------------------install jdk and jenkins------------------------------------------------'
 # install jenkins
 sudo apt update -y
 sudo apt install fontconfig openjdk-17-jre -y
 java -version
-
 sudo wget -O /usr/share/keyrings/jenkins-keyring.asc \
   https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
 echo "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc]" \
