@@ -43,7 +43,7 @@ pipeline {
                     sh '''
                     cd kubernetes
                     helm repo add secrets-store-csi-driver https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts --kubeconfig $KUBECONFIG
-                    helm install --force csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver --namespace kube-system --set syncSecret.enabled=true --kubeconfig $KUBECONFIG
+                    helm install --force --replace csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver --namespace kube-system --set syncSecret.enabled=true --kubeconfig $KUBECONFIG
 
                     # Installing AWS Provider
                     kubectl apply -f https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/deployment/aws-provider-installer.yaml --kubeconfig $KUBECONFIG
