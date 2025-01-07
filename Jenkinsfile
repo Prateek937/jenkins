@@ -5,7 +5,8 @@ pipeline {
         AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
         AWS_REGION = 'ap-south-1'
         CLUSTER_NAME = 'test-cluster'
-        KUBECONFIG = "${env.WORKSPACE}/kubeconfig"
+        // KUBECONFIG = "${env.WORKSPACE}/kubeconfig"
+        KUBECONFIG = "/home/ubuntu/config"
     }
     stages {
         stage('Provision EKS Cluster') {
