@@ -8,13 +8,6 @@ pipeline {
         KUBECONFIG = "${env.WORKSPACE}/kubeconfig"
     }
     stages {
-        stage('Test Credentials') {
-            steps {
-                script {
-                    sh 'aws ec2 describe-instances'
-                }
-            }
-        }
         stage('Provision EKS Cluster') {
             steps {
                 script {
