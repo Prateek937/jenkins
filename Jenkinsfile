@@ -15,6 +15,7 @@ pipeline {
                 script {
                     sh '''
                     # Initialize Terraform
+                    echo 'Hello Poul!'
                     cd ekscluster
                     terraform init
 
