@@ -47,9 +47,6 @@ pipeline {
 
                     # Installing AWS Provider
                     kubectl apply -f https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/deployment/aws-provider-installer.yaml --kubeconfig $KUBECONFIG
-                    // eksctl utils associate-iam-oidc-provider --region=${AWS_REGION} --cluster=${CLUSTER_NAME} --approve
-                    // eksctl delete iamserviceaccount --name csi-sa --region=${AWS_REGION} --cluster ${CLUSTER_NAME} 
-                    // eksctl create iamserviceaccount --name csi-sa --region=${AWS_REGION} --cluster ${CLUSTER_NAME} --attach-policy-arn {POLICY_ARN} --approve --override-existing-serviceaccounts
                     kubectl apply -f secretProviderClass.yaml --kubeconfig $KUBECONFIG
                     sleep 60
                     '''
@@ -62,6 +59,7 @@ pipeline {
                 script {
                     sh '''
                     cd kubernetes
+                    kubectl apply -f serviceAccount.yaml --kubeconfig $KUBECONFIG
                     kubectl apply -f application.yaml --kubeconfig $KUBECONFIG
 
                     '''
