@@ -9,29 +9,29 @@ pipeline {
         POLICY_ARN = "arn:aws:iam::025932243242:policy/CSI-eks-secret-manager"
     }
     stages {
-        stage('Provision EKS Cluster and Update Kubeconfig') {
-            steps {
-                script {
-                    sh '''
-                    # Initialize Terraform
-                    echo 'Hello Poul!'
-                    cd ekscluster
-                    terraform init
+        // stage('Provision EKS Cluster and Update Kubeconfig') {
+        //     steps {
+        //         script {
+        //             sh '''
+        //             # Initialize Terraform
+        //             echo 'Hello Poul!'
+        //             cd ekscluster
+        //             terraform init
 
-                    # Apply Terraform configuration
-                    terraform apply -auto-approve
+        //             # Apply Terraform configuration
+        //             terraform apply -auto-approve
 
-                    # Update kubeconfig to access EKS cluster
-                    aws eks update-kubeconfig --region ${AWS_REGION} --name ${CLUSTER_NAME} --kubeconfig $KUBECONFIG
-                    kubectl get pods
-                    '''
-                }
-            }
-        }
+        //             # Update kubeconfig to access EKS cluster
+        //             aws eks update-kubeconfig --region ${AWS_REGION} --name ${CLUSTER_NAME} --kubeconfig $KUBECONFIG
+        //             kubectl get pods
+        //             '''
+        //         }
+        //     }
+        // }
         stage('Building the Docker Image') {
             steps {
                 script {
-                    dockerImage = docker.build 'prateek937/testapp'
+                    dockerImage = docker.build 'prateek937/testapp' ./apps/
                 }
                 
             }
