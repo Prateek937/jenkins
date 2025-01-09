@@ -30,10 +30,13 @@ pipeline {
         }
         stage('Building the Docker Image') {
             steps {
-                docker.build("prateek937/app:latest", "./app")
-                docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
-                    docker.image("prateek937/app:latest").push()
+                script {
+                    docker.build("prateek937/app:latest", "./app")
+                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
+                        docker.image("prateek937/app:latest").push()
+                    }
                 }
+                
             }
             
         }
