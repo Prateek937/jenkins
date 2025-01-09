@@ -28,7 +28,12 @@ pipeline {
                 }
             }
         }
-
+        stage('Building the Docker Image') {
+            docker.build("prateek937/app:latest", "./app")
+            docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
+            docker.image("prateek937/app:latest").push()
+        }
+        }
         stage('Install Secret Store CSI Driver and Deploy Application') {
             steps {
                 script {
