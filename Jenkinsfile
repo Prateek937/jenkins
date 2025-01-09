@@ -31,7 +31,7 @@ pipeline {
         stage('Building the Docker Image') {
             steps {
                 script {
-                    dockerImage = docker.build 'prateek937/testapp' ./apps/
+                    dockerImage = docker.build 'prateek937/testapp' './apps/'
                 }
                 
             }
