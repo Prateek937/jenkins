@@ -9,25 +9,25 @@ pipeline {
         POLICY_ARN = "arn:aws:iam::025932243242:policy/CSI-eks-secret-manager"
     }
     stages {
-        // stage('Provision EKS Cluster and Update Kubeconfig') {
-        //     steps {
-        //         script {
-        //             sh '''
-        //             # Initialize Terraform
-        //             echo 'Hello Poul!'
-        //             cd ekscluster
-        //             terraform init
+        stage('Provision EKS Cluster and Update Kubeconfig') {
+            steps {
+                script {
+                    sh '''
+                    # Initialize Terraform
+                    echo 'Hello Poul!'
+                    cd ekscluster
+                    terraform init
 
-        //             # Apply Terraform configuration
-        //             terraform apply -auto-approve
+                    # Apply Terraform configuration
+                    terraform apply -auto-approve
 
-        //             # Update kubeconfig to access EKS cluster
-        //             aws eks update-kubeconfig --region ${AWS_REGION} --name ${CLUSTER_NAME} --kubeconfig $KUBECONFIG
-        //             kubectl get pods
-        //             '''
-        //         }
-        //     }
-        // }
+                    # Update kubeconfig to access EKS cluster
+                    aws eks update-kubeconfig --region ${AWS_REGION} --name ${CLUSTER_NAME} --kubeconfig $KUBECONFIG
+                    kubectl get pods
+                    '''
+                }
+            }
+        }
         stage('Building the Docker Image') {
             steps {
                 script {
@@ -43,26 +43,26 @@ pipeline {
             }
             
         }
-        // stage('Install Secret Store CSI Driver and Deploy Application') {
-        //     steps {
-        //         script {
-        //             sh '''
-        //             cd kubernetes
-        //             # Install Secret Store CSI Driver
-        //             helm repo add secrets-store-csi-driver https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts --kubeconfig $KUBECONFIG
-        //             helm upgrade --install csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver --namespace kube-system --set enableSecretRotation=true --set rotationPollInterval=5s --kubeconfig $KUBECONFIG
+        stage('Install Secret Store CSI Driver and Deploy Application') {
+            steps {
+                script {
+                    sh '''
+                    cd kubernetes
+                    # Install Secret Store CSI Driver
+                    helm repo add secrets-store-csi-driver https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts --kubeconfig $KUBECONFIG
+                    helm upgrade --install csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver --namespace kube-system --set enableSecretRotation=true --set rotationPollInterval=5s --kubeconfig $KUBECONFIG
 
-        //             # Installing AWS Provider
-        //             kubectl apply -f https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/deployment/aws-provider-installer.yaml --kubeconfig $KUBECONFIG
-        //             kubectl apply -f secretProviderClass.yaml --kubeconfig $KUBECONFIG
-        //             sleep 60
+                    # Installing AWS Provider
+                    kubectl apply -f https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/deployment/aws-provider-installer.yaml --kubeconfig $KUBECONFIG
+                    kubectl apply -f secretProviderClass.yaml --kubeconfig $KUBECONFIG
+                    sleep 60
 
-        //             # Deploy Demo Application
-        //             kubectl apply -f serviceAccount.yaml --kubeconfig $KUBECONFIG
-        //             kubectl apply -f application.yaml --kubeconfig $KUBECONFIG
-        //             '''
-        //         }
-        //     }
-        // }
+                    # Deploy Demo Application
+                    kubectl apply -f serviceAccount.yaml --kubeconfig $KUBECONFIG
+                    kubectl apply -f application.yaml --kubeconfig $KUBECONFIG
+                    '''
+                }
+            }
+        }
     }
 }
