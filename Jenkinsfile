@@ -31,29 +31,29 @@ pipeline {
         stage('Building the Docker Image') {
             docker.build("prateek937/app:latest", "./app")
             docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
-            docker.image("prateek937/app:latest").push()
-        }
-        }
-        stage('Install Secret Store CSI Driver and Deploy Application') {
-            steps {
-                script {
-                    sh '''
-                    cd kubernetes
-                    # Install Secret Store CSI Driver
-                    helm repo add secrets-store-csi-driver https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts --kubeconfig $KUBECONFIG
-                    helm upgrade --install csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver --namespace kube-system --set enableSecretRotation=true --set rotationPollInterval=5s --kubeconfig $KUBECONFIG
-
-                    # Installing AWS Provider
-                    kubectl apply -f https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/deployment/aws-provider-installer.yaml --kubeconfig $KUBECONFIG
-                    kubectl apply -f secretProviderClass.yaml --kubeconfig $KUBECONFIG
-                    sleep 60
-
-                    # Deploy Demo Application
-                    kubectl apply -f serviceAccount.yaml --kubeconfig $KUBECONFIG
-                    kubectl apply -f application.yaml --kubeconfig $KUBECONFIG
-                    '''
-                }
+                docker.image("prateek937/app:latest").push()
             }
         }
+        // stage('Install Secret Store CSI Driver and Deploy Application') {
+        //     steps {
+        //         script {
+        //             sh '''
+        //             cd kubernetes
+        //             # Install Secret Store CSI Driver
+        //             helm repo add secrets-store-csi-driver https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts --kubeconfig $KUBECONFIG
+        //             helm upgrade --install csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver --namespace kube-system --set enableSecretRotation=true --set rotationPollInterval=5s --kubeconfig $KUBECONFIG
+
+        //             # Installing AWS Provider
+        //             kubectl apply -f https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/deployment/aws-provider-installer.yaml --kubeconfig $KUBECONFIG
+        //             kubectl apply -f secretProviderClass.yaml --kubeconfig $KUBECONFIG
+        //             sleep 60
+
+        //             # Deploy Demo Application
+        //             kubectl apply -f serviceAccount.yaml --kubeconfig $KUBECONFIG
+        //             kubectl apply -f application.yaml --kubeconfig $KUBECONFIG
+        //             '''
+        //         }
+        //     }
+        // }
     }
 }
