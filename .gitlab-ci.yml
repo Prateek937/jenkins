@@ -20,6 +20,7 @@ stages:
   - provision
   - build
   - deploy
+  - destroy
 
 # Install necessary tools before running stages
 before_script:
@@ -96,4 +97,22 @@ deploy_application:
     - kubectl apply -f application.yaml --kubeconfig $KUBECONFIG
   variables:
     AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-    AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY} 
+    AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+
+destroy_infrastructure:
+  stage: destroy
+  when: manual
+  allow_failure: true
+  script:
+    - cd ekscluster
+    - terraform init
+    - terraform destroy -auto-approve
+  variables:
+    AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+    AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+  environment:
+    name: production
+    action: stop
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+ 
