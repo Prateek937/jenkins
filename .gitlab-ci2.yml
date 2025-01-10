@@ -1,0 +1,43 @@
+variables:
+  DOCKER_IMAGE: prateek937/testapp
+  DOCKER_TAG: latest
+  # Add these Docker TLS settings
+  DOCKER_TLS_CERTDIR: "/certs"
+
+# Using the docker:latest image instead of alpine
+image: docker:latest
+
+services:
+  - name: docker:dind
+    command: ["--tls=false"]
+
+stages:
+  - build
+
+before_script:
+  # No need for additional Docker installation since we're using docker:latest image
+  - docker info
+
+build_docker:
+  stage: build
+  variables:
+    # Configure Docker to use the service container
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_VERIFY: 1
+    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+  script:
+    # Login to Docker Hub
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+    
+    # Build the Docker image
+    - docker build -t $DOCKER_IMAGE:$DOCKER_TAG ./app/
+    
+    # Push the image to Docker Hub
+    - docker push $DOCKER_IMAGE:$DOCKER_TAG
+    
+    # Tag and push with commit SHA for versioning
+    - docker tag $DOCKER_IMAGE:$DOCKER_TAG $DOCKER_IMAGE:$CI_COMMIT_SHA
+    - docker push $DOCKER_IMAGE:$CI_COMMIT_SHA
+  variables:
+    DOCKER_USERNAME: ${DOCKER_USERNAME}
+    DOCKER_PASSWORD: ${DOCKER_PASSWORD} 

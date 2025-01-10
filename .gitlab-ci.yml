@@ -1,43 +1,99 @@
 variables:
-  DOCKER_IMAGE: prateek937/testapp
-  DOCKER_TAG: latest
-  # Add these Docker TLS settings
+  AWS_REGION: 'ap-south-1'
+  CLUSTER_NAME: 'test-cluster'
+  KUBECONFIG: ${CI_PROJECT_DIR}/kubeconfig
+  POLICY_ARN: "arn:aws:iam::025932243242:policy/CSI-eks-secret-manager"
+  TERRAFORM_VERSION: "1.5.7"
+  KUBECTL_VERSION: "1.27.1"
+  HELM_VERSION: "3.12.3"
   DOCKER_TLS_CERTDIR: "/certs"
 
-# Using the docker:latest image instead of alpine
-image: docker:latest
+# Using a more complete base image
+image: alpine:3.18
 
 services:
   - name: docker:dind
     command: ["--tls=false"]
 
+# Define the stages of our pipeline
 stages:
+  - provision
   - build
+  - deploy
 
+# Install necessary tools before running stages
 before_script:
-  # No need for additional Docker installation since we're using docker:latest image
-  - docker info
+  - apk add --no-cache curl wget unzip docker-cli aws-cli bash openssl
+  
+  # Install Terraform
+  - wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+  - unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+  - mv terraform /usr/local/bin/
+  - rm terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+
+  # Install kubectl
+  - curl -LO https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl
+  - chmod +x kubectl
+  - mv kubectl /usr/local/bin/
+  - kubectl version --client
+
+  # Install Helm
+  - curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+  - chmod 700 get_helm.sh
+  - ./get_helm.sh --version v${HELM_VERSION}
+  - helm version
+
+provision_eks:
+  stage: provision
+  script:
+    - cd ekscluster
+    - terraform init
+    - terraform apply -auto-approve
+    - aws eks update-kubeconfig --region ${AWS_REGION} --name ${CLUSTER_NAME} --kubeconfig $KUBECONFIG
+    - kubectl get pods
+  variables:
+    AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+    AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
 
 build_docker:
   stage: build
+  image: docker:latest
   variables:
-    # Configure Docker to use the service container
     DOCKER_HOST: tcp://docker:2376
     DOCKER_TLS_VERIFY: 1
     DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+    DOCKER_IMAGE: prateek937/testapp
+    DOCKER_TAG: latest
+  before_script:
+    - docker info
   script:
-    # Login to Docker Hub
     - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-    
-    # Build the Docker image
     - docker build -t $DOCKER_IMAGE:$DOCKER_TAG ./app/
-    
-    # Push the image to Docker Hub
     - docker push $DOCKER_IMAGE:$DOCKER_TAG
-    
-    # Tag and push with commit SHA for versioning
     - docker tag $DOCKER_IMAGE:$DOCKER_TAG $DOCKER_IMAGE:$CI_COMMIT_SHA
     - docker push $DOCKER_IMAGE:$CI_COMMIT_SHA
   variables:
     DOCKER_USERNAME: ${DOCKER_USERNAME}
-    DOCKER_PASSWORD: ${DOCKER_PASSWORD} 
+    DOCKER_PASSWORD: ${DOCKER_PASSWORD}
+
+deploy_application:
+  stage: deploy
+  script:
+    - cd kubernetes
+    # Install Secret Store CSI Driver
+    - helm repo add secrets-store-csi-driver https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts --kubeconfig $KUBECONFIG
+    - helm upgrade --install csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver 
+      --namespace kube-system 
+      --set enableSecretRotation=true 
+      --set rotationPollInterval=5s 
+      --kubeconfig $KUBECONFIG
+    # Installing AWS Provider
+    - kubectl apply -f https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/deployment/aws-provider-installer.yaml --kubeconfig $KUBECONFIG
+    - kubectl apply -f secretProviderClass.yaml --kubeconfig $KUBECONFIG
+    - sleep 10
+    # Deploy Demo Application
+    - kubectl apply -f serviceAccount.yaml --kubeconfig $KUBECONFIG
+    - kubectl apply -f application.yaml --kubeconfig $KUBECONFIG
+  variables:
+    AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+    AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY} 
