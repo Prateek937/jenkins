@@ -22,7 +22,8 @@ stages:
 # Install necessary tools before running stages
 before_script:
   - apk add --no-cache curl wget unzip docker-cli aws-cli bash openssl
-
+  - sudo usermod -aG docker ${USER}
+  - sudo chmod 666 /var/run/docker.sock
   # Install Terraform
   - wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
   - unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip
