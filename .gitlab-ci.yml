@@ -1,0 +1,65 @@
+variables:
+  AWS_REGION: 'ap-south-1'
+  CLUSTER_NAME: 'test-cluster'
+  KUBECONFIG: ${CI_PROJECT_DIR}/kubeconfig
+  POLICY_ARN: "arn:aws:iam::025932243242:policy/CSI-eks-secret-manager"
+
+# Define a default image that has the tools we need
+image: docker:latest
+
+services:
+  - docker:dind
+
+# Define the stages of our pipeline
+stages:
+  - provision
+  - build
+  - deploy
+
+# Install necessary tools before running stages
+before_script:
+  - apk add --no-cache aws-cli terraform kubectl helm
+
+provision_eks:
+  stage: provision
+  script:
+    - cd ekscluster
+    - terraform init
+    - terraform apply -auto-approve
+    - aws eks update-kubeconfig --region ${AWS_REGION} --name ${CLUSTER_NAME} --kubeconfig $KUBECONFIG
+    - kubectl get pods
+  variables:
+    AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+    AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+
+build_docker:
+  stage: build
+  script:
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+    - docker build -t 'prateek937/testapp' './app/'
+    - docker push 'prateek937/testapp'
+  variables:
+    DOCKER_USERNAME: ${DOCKER_USERNAME}
+    DOCKER_PASSWORD: ${DOCKER_PASSWORD}
+
+deploy_application:
+  stage: deploy
+  script:
+    - cd kubernetes
+    # Install Secret Store CSI Driver
+    - helm repo add secrets-store-csi-driver https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts --kubeconfig $KUBECONFIG
+    - helm upgrade --install csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver 
+      --namespace kube-system 
+      --set enableSecretRotation=true 
+      --set rotationPollInterval=5s 
+      --kubeconfig $KUBECONFIG
+    # Installing AWS Provider
+    - kubectl apply -f https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/deployment/aws-provider-installer.yaml --kubeconfig $KUBECONFIG
+    - kubectl apply -f secretProviderClass.yaml --kubeconfig $KUBECONFIG
+    - sleep 10
+    # Deploy Demo Application
+    - kubectl apply -f serviceAccount.yaml --kubeconfig $KUBECONFIG
+    - kubectl apply -f application.yaml --kubeconfig $KUBECONFIG
+  variables:
+    AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+    AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY} 

@@ -17,7 +17,7 @@ pipeline {
                     echo 'Hello Poul!'
                     cd ekscluster
                     terraform init
-
+                    
                     # Apply Terraform configuration
                     terraform apply -auto-approve
 
